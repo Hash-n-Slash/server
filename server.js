@@ -121,3 +121,4 @@ class Logger {
         console.error(message);
     }
 }
+export default Database;
