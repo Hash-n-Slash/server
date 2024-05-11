@@ -1,19 +1,14 @@
-const fs = require('fs');
-
 class Database {
     constructor(dbDir) {
         this.dbDir = dbDir;
-        if (!fs.existsSync(dbDir)) {
-            fs.mkdirSync(dbDir);
-        }
     }
 
     createTable(tableName, columns) {
         this.validateTableName(tableName);
         const tableFile = `${this.dbDir}/${tableName}.csv`;
-        if (!fs.existsSync(tableFile)) {
+        if (!Deno.existsSync(tableFile)) {
             const header = Object.keys(columns).join(',') + '\n';
-            fs.writeFileSync(tableFile, header);
+            Deno.writeTextFileSync(tableFile, header);
             return true;
         } else {
             throw new Error("Table already exists");
@@ -24,14 +19,14 @@ class Database {
         this.validateTableName(tableName);
         const tableFile = `${this.dbDir}/${tableName}.csv`;
         const line = Object.values(data).join(',') + '\n';
-        fs.appendFileSync(tableFile, line);
+        Deno.writeTextFileSync(tableFile, line, { append: true });
         return true;
     }
 
     getAllRecords(tableName, page = 1, perPage = 10) {
         this.validateTableName(tableName);
         const tableFile = `${this.dbDir}/${tableName}.csv`;
-        const lines = fs.readFileSync(tableFile, 'utf8').split('\n');
+        const lines = Deno.readTextFileSync(tableFile).split('\n');
         const totalRecords = lines.length - 1;
         const totalPages = Math.ceil(totalRecords / perPage);
         const offset = (page - 1) * perPage;
@@ -47,7 +42,7 @@ class Database {
     getRecordById(tableName, id) {
         this.validateTableName(tableName);
         const tableFile = `${this.dbDir}/${tableName}.csv`;
-        const lines = fs.readFileSync(tableFile, 'utf8').split('\n');
+        const lines = Deno.readTextFileSync(tableFile).split('\n');
         for (const line of lines) {
             const data = line.split(',');
             if (data[0] === id.toString()) {
@@ -60,7 +55,7 @@ class Database {
     updateRecord(tableName, id, data) {
         this.validateTableName(tableName);
         const tableFile = `${this.dbDir}/${tableName}.csv`;
-        const lines = fs.readFileSync(tableFile, 'utf8').split('\n');
+        const lines = Deno.readTextFileSync(tableFile).split('\n');
         const updatedLines = lines.map(line => {
             const rowData = line.split(',');
             if (rowData[0] === id.toString()) {
@@ -69,26 +64,26 @@ class Database {
                 return line;
             }
         });
-        fs.writeFileSync(tableFile, updatedLines.join('\n'));
+        Deno.writeTextFileSync(tableFile, updatedLines.join('\n'));
         return true;
     }
 
     deleteRecord(tableName, id) {
         this.validateTableName(tableName);
         const tableFile = `${this.dbDir}/${tableName}.csv`;
-        const lines = fs.readFileSync(tableFile, 'utf8').split('\n');
+        const lines = Deno.readTextFileSync(tableFile).split('\n');
         const filteredLines = lines.filter(line => {
             const rowData = line.split(',');
             return rowData[0] !== id.toString();
         });
-        fs.writeFileSync(tableFile, filteredLines.join('\n'));
+        Deno.writeTextFileSync(tableFile, filteredLines.join('\n'));
         return true;
     }
 
     filterRecords(tableName, conditions, page = 1, perPage = 10, orderBy = null) {
         this.validateTableName(tableName);
         const tableFile = `${this.dbDir}/${tableName}.csv`;
-        const lines = fs.readFileSync(tableFile, 'utf8').split('\n');
+        const lines = Deno.readTextFileSync(tableFile).split('\n');
         const filteredData = lines.filter(line => {
             const rowData = line.split(',');
             return Object.entries(conditions).every(([column, value]) => rowData.includes(value.toString()));
@@ -126,4 +121,3 @@ class Logger {
         console.error(message);
     }
 }
-
